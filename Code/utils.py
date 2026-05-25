@@ -1,8 +1,28 @@
 #imports
+import matplotlib.pyplot as plt
 import numpy as np
 import george
 import scipy.optimize as op
 import emcee
+
+def plot_curve_fit(time, mag_flipped, x_fit, pred, objectid, curve_type, peak, rise_time, fall_time):
+
+    #initialize plotting figure
+    fig, ax1 = plt.subplots()
+    
+    #plot raw lightcurve
+    ax1.scatter(time, mag_flipped, marker='o')
+
+    #split axis
+    ax2 = ax1.twinx()
+
+    #plot george
+    ax2.plot(x_fit, pred, color='r')
+
+    plt.title(f"Object: {objectid}; Type: SN_{curve_type}; Peak: {peak}; Rise: {rise_time}; Fall: {fall_time}")
+
+    plt.show()
+    plt.close()
 
 def decompose_curve(light_curve, fid=2, mag_boundry=22):
     
@@ -90,6 +110,6 @@ def get_fall_time(pred, x_fit, peak):
     #calculate fall time
     fall_days = 0
     for point in x_fit[peak_index:]:
-        if slopes[np.where(x_fit == point)] < 1:
+        if slopes[np.where(x_fit == point)] > -1:
             fall_days = point
     fall_time = fall_days - x_fit[peak_index]
