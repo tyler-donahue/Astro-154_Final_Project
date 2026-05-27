@@ -88,6 +88,12 @@ def get_rise_time(pred, x_fit, peak):
     #get peak index
     peak_index = np.argmax(pred)
 
+    return x_fit[peak_index] - x_fit[0]
+
+def rise_time_slope(pred, x_fit, peak):
+    #get peak index
+    peak_index = np.argmax(pred)
+
     #get gradient
     slopes = np.gradient(pred, x_fit)
 
@@ -104,6 +110,12 @@ def get_fall_time(pred, x_fit, peak):
     #get peak index
     peak_index = np.argmax(pred)
 
+    return x_fit[-1] - x_fit[peak_index]
+
+def fall_time_slope(pred, x_fit, peak):
+    #get peak index
+    peak_index = np.argmax(pred)
+
     #get gradient
     slopes = np.gradient(pred, x_fit)
     
@@ -113,3 +125,5 @@ def get_fall_time(pred, x_fit, peak):
         if slopes[np.where(x_fit == point)] > -1:
             fall_days = point
     fall_time = fall_days - x_fit[peak_index]
+
+    return fall_time
