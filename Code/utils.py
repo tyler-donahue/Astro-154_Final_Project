@@ -49,11 +49,22 @@ def decompose_curve(light_curve, fid=2, mag_boundry=22):
 
     return time, mag_flipped, error_flipped
 
+def fit_curve(time, mag, error, mode="george"):
+
+    match mode:
+        case "george":
+            return fit_george(time, mag, error)
+        case "mcmc":
+            return fit_custom(time, mag, error)
+
+def fit_custom(time, mag, error):
+    return None
+
 
 def fit_george(time, mag_flipped, error):
 
     #initialize data range
-    x_fit = np.linspace(np.min(time) - 5, np.max(time) + 100, 1000)
+    x_fit = np.linspace(np.min(time) - 50, np.max(time) + 100, 1000)
 
     #get george off
     #kernel =  np.var(mag_flipped) * george.kernels.ExpSquaredKernel(100)
@@ -84,7 +95,16 @@ def fit_george(time, mag_flipped, error):
 
     return pred, pred_var, x_fit
 
-def get_rise_time(pred, x_fit, peak):
+def get_rise_time(pred, x_fit, peak, mode="basic"):
+
+    match mode:
+        case "slope":
+            return rise_time_slope(pred, x_fit, peak)
+        case _:
+            return rise_time_basic(pred, x_fit, peak)
+
+def rise_time_basic(pred, x_fit, peak):
+    
     #get peak index
     peak_index = np.argmax(pred)
 
@@ -106,7 +126,16 @@ def rise_time_slope(pred, x_fit, peak):
 
     return rise_time
 
-def get_fall_time(pred, x_fit, peak):
+def get_fall_time(pred, x_fit, peak, mode="basic"):
+    
+    match mode:
+        case "slope":
+            return fall_time_slope(pred, x_fit, peak)
+        case _:
+            return fall_time_basic(pred, x_fit, peak)
+    
+def fall_time_basic(pred, x_fit, peak):
+    
     #get peak index
     peak_index = np.argmax(pred)
 
