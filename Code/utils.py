@@ -58,8 +58,23 @@ def fit_curve(time, mag, error, mode="george"):
             return fit_custom(time, mag, error)
 
 def fit_custom(time, mag, error):
+    
+    
     return None
 
+def log_likelihood(theta, time, mag, dmag):
+    # complete
+    likelihood = -0.5 * np.sum(((mag - (custom_model(theta, time))) / dmag)**2, axis=-1)
+    #print(likelihood.shape)
+    return likelihood
+    
+def custom_model(theta, time):
+
+    a, b, y, f, r = theta
+    t = time
+    numerator = a * (1 - (b * np.min(t) * np.min(y))) * np.exp(-((np.max(t) * np.max(y)) - y) / f)
+    denominator = 1 + np.exp(-t / r)
+    return numerator / denominator
 
 def fit_george(time, mag_flipped, error):
 
