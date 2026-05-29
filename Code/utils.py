@@ -5,6 +5,24 @@ import george
 import scipy.optimize as op
 import emcee
 
+#constants
+a_min = 0.1
+a_max = 100
+b_min = 0.1
+b_max = 0.01
+y_min = 0.1
+y_max = 300
+t_min = -50
+t_max = 300
+f_min = 1
+f_max = 300
+r_min = 0.01
+r_max = 50
+n_params = 6
+n_walkers = 100
+n_steps = 10000
+
+#functions
 def plot_curve_fit(time, mag_flipped, x_fit, pred, objectid, curve_type, peak, rise_time, fall_time):
 
     #initialize plotting figure
@@ -57,23 +75,74 @@ def fit_curve(time, mag, error, mode="george"):
         case "mcmc":
             return fit_custom(time, mag, error)
 
-def fit_custom(time, mag, error):
+def fit_custom(time, mag, dmag):
+
+    time = time / np.max(time)
     
+    #initialize data range
+    x_fit = np.linspace(np.min(time) - 50, np.max(time) + 100, 1000)
+
+    rng = np.random.default_rng()
+    a_random =  (rng.random(n_walkers) * a_max)
+    b_random =  (rng.random(n_walkers) * b_max)
+    y_random =  (rng.random(n_walkers) * y_max)
+    t_random =  (rng.random(n_walkers) * t_max)
+    f_random =  (rng.random(n_walkers) * f_max)
+    r_random =  (rng.random(n_walkers) * r_max)
     
-    return None
+    initial_guesses = np.array([a_random, b_random, y_random, t_random, f_random, r_random])
+
+    # initialize the sampler
+    sampler = emcee.EnsembleSampler(n_walkers, n_params, log_posterior, args=[time, mag, dmag])
+
+    # run!
+    sampler.run_mcmc(initial_guesses.T, n_steps)
+
+    flat = sampler.get_chain(discard=100, flat=True)
+
+    theta = [np.mean(flat[:, 0]), np.mean(flat[:, 1]), np.mean(flat[:, 2]), np.mean(flat[:, 3]), np.mean(flat[:, 4]), np.mean(flat[:, 5])]
+    
+    return (custom_model(theta, x_fit), 0, x_fit)
+
+def log_posterior(theta, time, mag, dmag):
+    return log_likelihood(theta, time, mag, dmag) + log_prior(theta)
+
+def log_prior(theta):
+
+    a, b, y, t, f, r = theta
+
+    a_cond = (a > a_min) & (a < a_max)
+    a_cond = a_cond / (a_max - a_min)
+
+    b_cond = (b > b_min) & (b < b_max)
+    b_cond = b_cond / (b_max - b_min)
+
+    y_cond = (y > y_min) & (y < y_max)
+    y_cond = y_cond / (y_max - y_min)
+
+    t_cond = (t > t_min) & (t < t_max)
+    t_cond = t_cond / (t_max - t_min)
+
+    f_cond = (f > f_min) & (f < f_max)
+    f_cond = f_cond / (f_max - f_min)
+
+    r_cond = (r > r_min) & (r < r_max)
+    r_cond = r_cond / (r_max - r_min)
+
+    return np.log(a_cond * b_cond * y_cond * t_cond * f_cond * r_cond)
 
 def log_likelihood(theta, time, mag, dmag):
-    # complete
+
     likelihood = -0.5 * np.sum(((mag - (custom_model(theta, time))) / dmag)**2, axis=-1)
-    #print(likelihood.shape)
+
     return likelihood
     
 def custom_model(theta, time):
 
-    a, b, y, f, r = theta
-    t = time
-    numerator = a * (1 - (b * np.min(t) * np.min(y))) * np.exp(-((np.max(t) * np.max(y)) - y) / f)
-    denominator = 1 + np.exp(-t / r)
+    a, b, y, t, f, r = theta
+    t = time - t
+    numerator = a * (1 - (b * np.minimum(t, y))) * np.exp(-1 * ((np.maximum(t, y)) - y) / f)
+    denominator = 1 + np.exp(-1 * (t / r))
     return numerator / denominator
 
 def fit_george(time, mag_flipped, error):
@@ -81,7 +150,7 @@ def fit_george(time, mag_flipped, error):
     #initialize data range
     x_fit = np.linspace(np.min(time) - 50, np.max(time) + 100, 1000)
 
-    #get george off
+    #initialize george
     #kernel =  np.var(mag_flipped) * george.kernels.ExpSquaredKernel(100)
     kernel = np.var(mag_flipped) * george.kernels.Matern32Kernel(metric=100)
     gp = george.GP(kernel, solver=george.HODLRSolver)
