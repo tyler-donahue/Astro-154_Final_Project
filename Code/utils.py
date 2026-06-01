@@ -148,7 +148,7 @@ def custom_model(theta, time):
 def fit_george(time, mag_flipped, error):
 
     #initialize data range
-    x_fit = np.linspace(np.min(time) - 50, np.max(time) + 100, 1000)
+    x_fit = np.linspace(np.min(time) - 5, np.max(time) + 100, 1000)
 
     #initialize george
     #kernel =  np.var(mag_flipped) * george.kernels.ExpSquaredKernel(100)
