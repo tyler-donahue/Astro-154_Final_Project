@@ -30,6 +30,8 @@ def plot_curve_fit(time, mag_flipped, x_fit, pred, objectid, curve_type, peak, r
     
     #plot raw lightcurve
     ax1.scatter(time, mag_flipped, marker='o')
+    plt.xlabel("Date (mjd)")
+    plt.ylabel("Psuedo Flux (e$^{mag}$)")
 
     #split axis
     ax2 = ax1.twinx()
@@ -37,7 +39,7 @@ def plot_curve_fit(time, mag_flipped, x_fit, pred, objectid, curve_type, peak, r
     #plot george
     ax2.plot(x_fit, pred, color='r')
 
-    plt.title(f"Object: {objectid}; Type: SN_{curve_type}; Peak: {peak}; Rise: {rise_time}; Fall: {fall_time}")
+    plt.title(f"Object: {objectid}; Type: SN_{curve_type}")#; Peak: {peak}; Rise: {rise_time}; Fall: {fall_time}")
 
     plt.show()
     plt.close()
